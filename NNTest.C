@@ -167,7 +167,7 @@ void NNTest(void) {
    dataloader->PrepareTrainingAndTestTree(mycut, mycut, "");
 
    factory->BookMethod(dataloader, TMVA::Types::kBDT, "BDT", "");
-   factory->BookMethod(dataloader, TMVA::Types::kSVM, "SVM", "");
+   //factory->BookMethod(dataloader, TMVA::Types::kSVM, "SVM", "");
    /*factory->BookMethod(dataloader, TMVA::Types::kDL, "DNN_CPU",
          "!H:V:ErrorStrategy=CROSSENTROPY:VarTransform=N:WeightInitialization=XAVIERUNIFORM:"
          "Layout=TANH|128,TANH|128,TANH|128,LINEAR:"
