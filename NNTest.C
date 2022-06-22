@@ -1,78 +1,17 @@
+/*
+   Implementation of machine learning algorithms to optimize cutting on nutau signal/bkgd
+*/
+
+
 #include <iostream>
 #include <cstdlib>
 
 #include "TMVA/Types.h"
 
-using namespace TMath;
-
-const double DELMSQ_31 = 2.515e-3; //In eV^2
-const double LOSC = 1300.; //In km
-
-const double THETA_23 = 0.859;
-const double THETA_13 = 0.150;
-
-double POTperYear = 1.1e21;
-double nonswapPOT = 1.62824e24;
-double nueswapPOT = 1.64546e24;
-double tauswapPOT = 5.18551e24;
-
 TString nonswap = "/storage/shared/wshi/CAFs/FD/FD_FHC_nonswap.root";
 TString nueswap = "/storage/shared/wshi/CAFs/FD/FD_FHC_nueswap.root";
 TString tauswap = "/storage/shared/wshi/CAFs/FD/FD_FHC_tauswap.root";
 
-double OscWeight(const TString filename, const double Ev, const int nuPDG) {
-  //First check flavor, then check which file it came from. Apply appropriate oscillation probability
-  if (nuPDG == 12 || nuPDG == -12) {
-    if (filename == nonswap)
-      return 1. - Power(Sin(2 * THETA_13) * Sin((Pi() * DELMSQ_31 * LOSC) / (2.48 * Ev)), 2.); //Apply nue disappearance
-    else if (filename == nueswap)
-      return Power(Sin(THETA_23) * Sin(2 * THETA_13) * Sin((Pi() * DELMSQ_31 * LOSC) / (2.48 * Ev)), 2.); //Apply numu->nue
-    else if (filename == tauswap) {
-      std::cerr << "This should not happen: (nu_e in tauswap) \n";
-      return 0.;
-    } else {
-      std::cerr << "This should not happen: (File name not recognized) \n";
-        return 0.;
-    }
-  }
-  else if (nuPDG == 14 || nuPDG == -14) {
-    if (filename == nonswap) {
-      return 1. - Power(Sin(2 * THETA_23) * Sin((Pi() * DELMSQ_31 * LOSC) / (2.48 * Ev)), 2.); //Apply numu disappearance
-    }
-    else if (filename == nueswap) {
-      std::cerr << "This should not happen: (nu_mu in nueswap) \n";
-      return 0.;
-    }
-    else if (filename == tauswap) {
-      return Power(Sin(2 * THETA_13) * Sin(THETA_23) * Sin((Pi() * DELMSQ_31 * LOSC) / (2.48 * Ev)), 2.); //Apply nue->numu
-    }
-    else {
-        std::cerr << "This should not happen: (File name not recognized) \n";
-        return 0.;
-    }
-  }
-  else if (nuPDG == 16 || nuPDG == -16) {
-    if (filename == nonswap) {
-      std:cerr << "This should not happen (nu_tau in nonswap) \n";
-      return 0.;
-    }
-    else if (filename == nueswap) {
-      return Power(Sin(2 * THETA_13) * Cos(THETA_23) * Sin((Pi() * DELMSQ_31 * LOSC) / (2.48 * Ev)), 2.); //Apply nue->nutau
-    }
-    else if (filename == tauswap) {
-      return Power(Power(Cos(THETA_13), 2.) * Sin(2 * THETA_23) * Sin((Pi() * DELMSQ_31 * LOSC) / (2.48 * Ev)), 2.); //Apply numu->nutau
-    }
-    else {
-        std::cerr << "This should not happen: (File name not recognized) \n";
-        return 0.;
-    }
-  }
-  else {
-    std::cerr << "This should not happen: (nuPDG not recognized) \n";
-    return 0.;
-  }
-
-}
 
 
 void NNTest(void) {

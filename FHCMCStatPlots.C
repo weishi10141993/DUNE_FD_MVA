@@ -1,3 +1,15 @@
+/*
+This code takes the FD MC swap files and plots a variety of statistics
+
+
+*/
+
+
+
+
+
+
+
 #include <iostream>
 #include <string>
 
@@ -80,7 +92,7 @@ double OscWeight(const TString filename, const double Ev, const int nuPDG) {
 
 }
 
-void WeightedCVNFHC(void) {
+void FHCMCStatPlots(void) {
 
   TCanvas* c1 = new TCanvas("c1", "c1", 1000, 1000);
   c1->SetRightMargin(0.12);

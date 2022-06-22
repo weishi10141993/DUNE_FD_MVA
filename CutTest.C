@@ -1,3 +1,9 @@
+/*
+   This code tests the sensitivity, efficiency, and purity of set of neutrino measurements
+      given a particular cut.
+*/
+
+
 #include <iostream>
 #include <cstdlib>
 
@@ -81,6 +87,7 @@ double OscWeight(const TString filename, const double Ev, const int nuPDG) {
 
 }
 
+//This function is what I used to calculate the POT numbers for each MC swapfile
 void POTNumber(void) {
   TChain* ch1 = new TChain("meta");
   ch1->Add(nonswap);

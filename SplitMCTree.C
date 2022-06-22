@@ -1,3 +1,12 @@
+/*
+   This code takes the three FD MC swapfiles and divides them into 7 trees
+   One tree for each PDG/swapfile combination (i.e Nutau from tauswap, Nue from nueswap, etc.)
+   One tree for NC events
+   Additionally adds a branch to each tree with the approximate oscillation probability and
+      appropriate POT scaling.
+*/
+
+
 #include <iostream>
 #include <cstdlib>
 
