@@ -24,19 +24,21 @@ void NNTest(void) {
    TTree* NumuFromTauswap = (TTree*)inputFile->Get("NumuFromTauswap");
    TTree* NCTree = (TTree*)inputFile->Get("NCTree");
 
-   TTree* TestNuTauFromTauswap = (TTree*)inputFile->Get("TestNuTauFromTauswap");
+   /*TTree* TestNuTauFromTauswap = (TTree*)inputFile->Get("TestNuTauFromTauswap");
    TTree* TestNuTauFromNueswap = (TTree*)inputFile->Get("TestNuTauFromNueswap");
    TTree* TestNueFromNonswap = (TTree*)inputFile->Get("TestNueFromNonswap");
    TTree* TestNueFromNueswap = (TTree*)inputFile->Get("TestNueFromNueswap");
    TTree* TestNumuFromNonswap = (TTree*)inputFile->Get("TestNumuFromNonswap");
    TTree* TestNumuFromTauswap = (TTree*)inputFile->Get("TestNumuFromTauswap");
-   TTree* TestNCTree = (TTree*)inputFile->Get("TestNCTree");
+   TTree* TestNCTree = (TTree*)inputFile->Get("TestNCTree");*/
 
    std::vector<TTree*> TreeArray = {NuTauFromTauswap, NuTauFromNueswap, NueFromNonswap, NueFromNueswap,
-      NumuFromNonswap, NumuFromTauswap, NCTree, TestNuTauFromTauswap, TestNuTauFromNueswap,
-      TestNueFromNonswap, TestNueFromNueswap, TestNumuFromNonswap, TestNumuFromTauswap, TestNCTree};
+      NumuFromNonswap, NumuFromTauswap, NCTree,
+   //    TestNuTauFromTauswap, TestNuTauFromNueswap, TestNueFromNonswap, TestNueFromNueswap,
+   //      TestNumuFromNonswap, TestNumuFromTauswap, TestNCTree
+    };
 
-   TFile* outputFile = new TFile("NNTest2.root", "RECREATE");
+   TFile* outputFile = new TFile("/storage/shared/ncchambe/FDMonteCarlo/NNTest2.root", "RECREATE");
 
    TMVA::Factory* factory = new TMVA::Factory("NuTauClassification", outputFile,
          "!V:!Silent:Color:DrawProgressBar:AnalysisType=Classification");
@@ -68,28 +70,42 @@ void NNTest(void) {
       i->SetBranchStatus("cvnnc", true);
    }
 
-   dataloader->SetSignalWeightExpression("POTScaledOscweight");
-   dataloader->SetBackgroundWeightExpression("isCC*(POTScaledOscweight - 1) + 1");
+   dataloader->SetWeightExpression("POTScaledOscweight");
 
    double signalweight = 3.5;
    double bkgdweight = 3.5; //These variables are the years of running the exp
 
 
-   dataloader->AddSignalTree(NuTauFromTauswap, signalweight, TMVA::Types::kTraining);
-   dataloader->AddBackgroundTree(NuTauFromNueswap, bkgdweight, TMVA::Types::kTraining);
-   dataloader->AddBackgroundTree(NumuFromTauswap, bkgdweight, TMVA::Types::kTraining);
-   dataloader->AddBackgroundTree(NumuFromNonswap, bkgdweight, TMVA::Types::kTraining);
-   dataloader->AddBackgroundTree(NueFromNueswap, bkgdweight, TMVA::Types::kTraining);
-   dataloader->AddBackgroundTree(NueFromNonswap, bkgdweight, TMVA::Types::kTraining);
-   dataloader->AddBackgroundTree(NCTree, bkgdweight, TMVA::Types::kTraining);
+   dataloader->AddSignalTree(NuTauFromTauswap, signalweight
+   //    ,TMVA::Types::kTraining
+   );
+   dataloader->AddBackgroundTree(NuTauFromNueswap, bkgdweight
+       //   ,TMVA::Types::kTraining
+   );
+   dataloader->AddBackgroundTree(NumuFromTauswap, bkgdweight
+       //   ,TMVA::Types::kTraining
+   );
+   dataloader->AddBackgroundTree(NumuFromNonswap, bkgdweight
+       //   ,TMVA::Types::kTraining
+   );
+   dataloader->AddBackgroundTree(NueFromNueswap, bkgdweight
+       //   ,TMVA::Types::kTraining
+   );
+   dataloader->AddBackgroundTree(NueFromNonswap, bkgdweight
+       //   ,TMVA::Types::kTraining
+   );
+   dataloader->AddBackgroundTree(NCTree, bkgdweight
+       //   ,TMVA::Types::kTraining
+   );
 
-   dataloader->AddSignalTree(TestNuTauFromTauswap, signalweight, TMVA::Types::kTesting);
+   //Optional tree for testing
+   /*dataloader->AddSignalTree(TestNuTauFromTauswap, signalweight, TMVA::Types::kTesting);
    dataloader->AddBackgroundTree(TestNuTauFromNueswap, bkgdweight, TMVA::Types::kTesting);
    dataloader->AddBackgroundTree(TestNumuFromTauswap, bkgdweight, TMVA::Types::kTesting);
    dataloader->AddBackgroundTree(TestNumuFromNonswap, bkgdweight, TMVA::Types::kTesting);
    dataloader->AddBackgroundTree(TestNueFromNueswap, bkgdweight, TMVA::Types::kTesting);
    dataloader->AddBackgroundTree(TestNueFromNonswap, bkgdweight, TMVA::Types::kTesting);
-   dataloader->AddBackgroundTree(TestNCTree, bkgdweight, TMVA::Types::kTesting);
+   dataloader->AddBackgroundTree(TestNCTree, bkgdweight, TMVA::Types::kTesting);*/
 
    dataloader->AddVariable("cvnnue", 'F');
    dataloader->AddVariable("cvnnumu", 'F');
@@ -100,6 +116,7 @@ void NNTest(void) {
 
    dataloader->AddSpectator("RecoEVis := eRecoPim + eRecoPip + eRecoPi0 + eRecoP + eRecoN + eRecoOther", 'F');
    dataloader->AddSpectator("Ev", 'F');
+   dataloader->AddSpectator("POTScaledOscweight", 'F');
 
    TCut mycut = "(cvnnue > 0.) && (cvnnumu > 0.) && (cvnnutau > 0.) && (cvnnc > 0.) && (eDepP + eDepN + eDepPip + eDepPim + eDepPi0 + eDepOther <= 10.)";
 
@@ -115,8 +132,8 @@ void NNTest(void) {
          "WeightDecay=1e-4,Regularization=None,"
          "DropConfig=0.0+0.5+0.5+0.5"
          ":Architecture=CPU");*/
-   factory->BookMethod(dataloader, TMVA::Types::kCuts, "Cuts",
-         "!H:!V:FitMethod=MC:EffSel:VarProp=FSmart");
+   //factory->BookMethod(dataloader, TMVA::Types::kCuts, "Cuts",
+   //      "!H:!V:FitMethod=MC:EffSel:VarProp=FSmart");
    //factory->BookMethod(dataloader, TMVA::Types::kPDERS, "PDERS",
    //      "!H:!V:NormTree=T:VolumeRangeMode=Adaptive:KernelEstimator=Gauss:GaussSigma=0.3:NEventsMin=400:NEventsMax=600");
    factory->TrainAllMethods();

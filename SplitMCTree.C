@@ -26,6 +26,7 @@ double POTperYear = 1.1e21;
 double nonswapPOT = 1.62824e24;
 double nueswapPOT = 1.64546e24;
 double tauswapPOT = 5.18551e24;
+double scalefactor = 40. / 1.13;
 
 double OscWeight(const TString filename, const double Ev, const int nuPDG) {
   //First check flavor, then check which file it came from. Apply appropriate oscillation probability
@@ -171,7 +172,7 @@ void SplitMCTree(void) {
    TestNCTree->Branch("POTScaledOscweight", &POTScaledOscweight);
 
    auto trainentries = NCInputTree->GetEntries();
-   POTScaledOscweight = POTperYear / nonswapPOT;
+   POTScaledOscweight = scalefactor * POTperYear / nonswapPOT;
    for (auto i = 0; i < trainentries; i++) {
       NCInputTree->GetEntry(i);
       if (!isCC)
@@ -190,27 +191,27 @@ void SplitMCTree(void) {
    for (auto i = 0; i < nentries; i++) {
       ch1->GetEntry(i);
       if (isCC && (nuPDG == 16 || nuPDG == -16) && ch1->GetCurrentFile()->GetName() == tauswap) {
-         POTScaledOscweight = OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (POTperYear / tauswapPOT);
+         POTScaledOscweight = OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (scalefactor * POTperYear / tauswapPOT);
          NuTauFromTauswap->Fill();
       }
       else if (isCC && (nuPDG == 16 || nuPDG == -16) && ch1->GetCurrentFile()->GetName() == nueswap) {
-         POTScaledOscweight = OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (POTperYear / nueswapPOT);
+         POTScaledOscweight = OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (scalefactor * POTperYear / nueswapPOT);
          NuTauFromNueswap->Fill();
       }
       else if (isCC && (nuPDG == 14 || nuPDG == -14) && ch1->GetCurrentFile()->GetName() == tauswap) {
-         POTScaledOscweight = OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (POTperYear / tauswapPOT);
+         POTScaledOscweight = OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (scalefactor * POTperYear / tauswapPOT);
          NumuFromTauswap->Fill();
       }
       else if (isCC && (nuPDG == 14 || nuPDG == -14) && ch1->GetCurrentFile()->GetName() == nonswap) {
-         POTScaledOscweight = OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (POTperYear / nonswapPOT);
+         POTScaledOscweight = OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (scalefactor * POTperYear / nonswapPOT);
          NumuFromNonswap->Fill();
       }
       else if (isCC && (nuPDG == 12 || nuPDG == -12) && ch1->GetCurrentFile()->GetName() == nonswap) {
-         POTScaledOscweight = OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (POTperYear / nonswapPOT);
+         POTScaledOscweight = OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (scalefactor * POTperYear / nonswapPOT);
          NueFromNonswap->Fill();
       }
       else if (isCC && (nuPDG == 12 || nuPDG == -12) && ch1->GetCurrentFile()->GetName() == nueswap) {
-         POTScaledOscweight = OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (POTperYear / nueswapPOT);
+         POTScaledOscweight = OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (scalefactor * POTperYear / nueswapPOT);
          NueFromNueswap->Fill();
       }
       if (i % 10000 == 0) std::cerr << (float)(i + 1) / (float)nentries << std::endl;
@@ -220,27 +221,27 @@ void SplitMCTree(void) {
    for (auto i = 0; i < nentries2; i++) {
       ch2->GetEntry(i);
       if (isCC && (nuPDG == 16 || nuPDG == -16) && ch2->GetCurrentFile()->GetName() == tauswap) {
-         POTScaledOscweight = OscWeight(ch2->GetCurrentFile()->GetName(), Ev, nuPDG) * (POTperYear / tauswapPOT);
+         POTScaledOscweight = OscWeight(ch2->GetCurrentFile()->GetName(), Ev, nuPDG) * (scalefactor * POTperYear / tauswapPOT);
          TestNuTauFromTauswap->Fill();
       }
       else if (isCC && (nuPDG == 16 || nuPDG == -16) && ch2->GetCurrentFile()->GetName() == nueswap) {
-         POTScaledOscweight = OscWeight(ch2->GetCurrentFile()->GetName(), Ev, nuPDG) * (POTperYear / nueswapPOT);
+         POTScaledOscweight = OscWeight(ch2->GetCurrentFile()->GetName(), Ev, nuPDG) * (scalefactor * POTperYear / nueswapPOT);
          TestNuTauFromNueswap->Fill();
       }
       else if (isCC && (nuPDG == 14 || nuPDG == -14) && ch2->GetCurrentFile()->GetName() == tauswap) {
-         POTScaledOscweight = OscWeight(ch2->GetCurrentFile()->GetName(), Ev, nuPDG) * (POTperYear / tauswapPOT);
+         POTScaledOscweight = OscWeight(ch2->GetCurrentFile()->GetName(), Ev, nuPDG) * (scalefactor * POTperYear / tauswapPOT);
          TestNumuFromTauswap->Fill();
       }
       else if (isCC && (nuPDG == 14 || nuPDG == -14) && ch2->GetCurrentFile()->GetName() == nonswap) {
-         POTScaledOscweight = OscWeight(ch2->GetCurrentFile()->GetName(), Ev, nuPDG) * (POTperYear / nonswapPOT);
+         POTScaledOscweight = OscWeight(ch2->GetCurrentFile()->GetName(), Ev, nuPDG) * (scalefactor * POTperYear / nonswapPOT);
          TestNumuFromNonswap->Fill();
       }
       else if (isCC && (nuPDG == 12 || nuPDG == -12) && ch2->GetCurrentFile()->GetName() == nonswap) {
-         POTScaledOscweight = OscWeight(ch2->GetCurrentFile()->GetName(), Ev, nuPDG) * (POTperYear / nonswapPOT);
+         POTScaledOscweight = OscWeight(ch2->GetCurrentFile()->GetName(), Ev, nuPDG) * (scalefactor * POTperYear / nonswapPOT);
          TestNueFromNonswap->Fill();
       }
       else if (isCC && (nuPDG == 12 || nuPDG == -12) && ch2->GetCurrentFile()->GetName() == nueswap) {
-         POTScaledOscweight = OscWeight(ch2->GetCurrentFile()->GetName(), Ev, nuPDG) * (POTperYear / nueswapPOT);
+         POTScaledOscweight = OscWeight(ch2->GetCurrentFile()->GetName(), Ev, nuPDG) * (scalefactor * POTperYear / nueswapPOT);
          TestNueFromNueswap->Fill();
       }
       if (i % 10000 == 0) std::cerr << (float)(i + 1) / (float)nentries2 << std::endl;
