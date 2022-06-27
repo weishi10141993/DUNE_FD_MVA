@@ -95,7 +95,7 @@ double OscWeight(const TString filename, const double Ev, const int nuPDG) {
 void FHCMCStatPlots(void) {
 
   TCanvas* c1 = new TCanvas("c1", "c1", 1000, 1000);
-  c1->SetRightMargin(0.12);
+  c1->SetRightMargin(0.16);
 
   TChain* ch1 = new TChain("cafTree");
   ch1->Add(nonswap);
@@ -147,9 +147,21 @@ void FHCMCStatPlots(void) {
   TH2D* hDepPimRatioT = new TH2D("hDepPimRatioT", "hDepPimRatioT", 25, 0., 10, 20, 0., 1.);
   TH2D* hDepPimRatioNC = new TH2D("hDepPimRatioNC", "hDepPimRatioNC", 25, 0., 10, 20, 0., 1.);
 
-  TH2D* hResolutionE = new TH2D("hResolutionE", "hResolutionE", 40, -2., 2., 25, 0., 10.);
-  TH2D* hResolutionM = new TH2D("hResolutionM", "hResolutionM", 40, -2., 2., 25, 0., 10.);
-  TH2D* hResolutionT = new TH2D("hResolutionT", "hResolutionT", 40, -2., 2., 25, 0., 10.);
+  TH2D* hResolutionE = new TH2D("hResolutionE", "hResolutionE", 10, 0., 1., 25, 0., 10.);
+  TH2D* hResolutionM = new TH2D("hResolutionM", "hResolutionM", 10, 0., 1., 25, 0., 10.);
+  TH2D* hResolutionT = new TH2D("hResolutionT", "hResolutionT", 10, 0., 1., 25, 0., 10.);
+
+  TH2D* hTruevRecoEE = new TH2D("hTruevRecoEE", "hTruevRecoEE", 25, 0., 10., 25, 0., 10.);
+  TH2D* hTruevRecoEM = new TH2D("hTruevRecoEM", "hTruevRecoEM", 25, 0., 10., 25, 0., 10.);
+  TH2D* hTruevRecoET = new TH2D("hTruevRecoET", "hTruevRecoET", 25, 0., 10., 25, 0., 10.);
+
+  TH2D* hResolutionE2 = new TH2D("hResolutionE2", "hResolutionE2", 10, 0., 1., 25, 0., 10.);
+  TH2D* hResolutionM2 = new TH2D("hResolutionM2", "hResolutionM2", 10, 0., 1., 25, 0., 10.);
+  TH2D* hResolutionT2 = new TH2D("hResolutionT2", "hResolutionT2", 10, 0., 1., 25, 0., 10.);
+
+  TH1D* hResolutionE1D = new TH1D("hResolutionE1D", "hResolutionE1D", 10, 0., 1.);
+  TH1D* hResolutionM1D = new TH1D("hResolutionM1D", "hResolutionM1D", 10, 0., 1.);
+  TH1D* hResolutionT1D = new TH1D("hResolutionT1D", "hResolutionT1D", 10, 0., 1.);
 
   gStyle->SetOptStat(0);
 
@@ -169,8 +181,10 @@ void FHCMCStatPlots(void) {
   double eDepPim = 0.;
   double eDepPi0 = 0.;
   double eDepOther = 0.;
-  double DepEVis = 0.;
+  double eDepTotal = 0.;
   double DepPimRatio = 0.;
+  double RecoLepEnNumu = 0.;
+  double RecoLepEnNue = 0.;
 
   double eRecoP = 0.;
   double eRecoN = 0.;
@@ -178,7 +192,7 @@ void FHCMCStatPlots(void) {
   double eRecoPim = 0.;
   double eRecoPi0 = 0.;
   double eRecoOther = 0.;
-  double RecoEVis = 0.;
+  double eRecoTotal = 0.;
 
   ch1->SetBranchStatus("*", false);
   ch1->SetBranchStatus("Ev", true);
@@ -238,6 +252,12 @@ void FHCMCStatPlots(void) {
   ch1->SetBranchStatus("eRecoOther", true);
   ch1->SetBranchAddress("eRecoOther", &eRecoOther);
 
+  ch1->SetBranchStatus("RecoLepEnNumu", true);
+  ch1->SetBranchAddress("RecoLepEnNumu", &RecoLepEnNumu);
+
+  ch1->SetBranchStatus("RecoLepEnNue", true);
+  ch1->SetBranchAddress("RecoLepEnNue", &RecoLepEnNue);
+
 
   int nentries = ch1->GetEntries();
 
@@ -272,10 +292,10 @@ void FHCMCStatPlots(void) {
 
   for (auto i = 0; i < nentries; i++) {
     ch1->GetEntry(i);
-    DepEVis = eDepP + eDepN + eDepPip + eDepPim + eDepPi0 + eDepOther;
-    RecoEVis = eRecoP + eRecoN + eRecoPip + eRecoPim + eRecoPi0 + eRecoOther;
-    DepPimRatio = eDepPim / DepEVis;
-    if (DepEVis <= 10) {
+    eDepTotal = eDepP + eDepN + eDepPip + eDepPim + eDepPi0 + eDepOther + RecoLepEnNumu + RecoLepEnNue; //Attempt at reconstructed energy
+    //eRecoTotal = eRecoP + eRecoN + eRecoPip + eRecoPim + eRecoPi0 + eRecoOther;
+    DepPimRatio = eDepPim / eDepTotal;
+//    if (eDepTotal <= 10) {
       if (isCC) {
         //Check Flavor
         if (nuPDG == 12 || nuPDG == -12) {
@@ -285,19 +305,27 @@ void FHCMCStatPlots(void) {
           wcvnnc_fromnue->Fill(cvnnc, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
 
           weDepPimNue->Fill(eDepPim, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
-          weDepElseNue->Fill(DepEVis - eDepPim, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
+          weDepElseNue->Fill(eDepTotal - eDepPim, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
 
           hDepPimRatioE->Fill(Ev, DepPimRatio, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
 
-          hResolutionE->Fill((Ev - RecoEVis)/Ev, Ev, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
+          hResolutionE->Fill((Ev - eDepTotal)/Ev, Ev, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
+
+          hTruevRecoEE->Fill(Ev, eDepTotal, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
+
+          hResolutionE2->Fill(eDepTotal/Ev, Ev, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
+
+         if (2. <= Ev && Ev <= 3.)
+            hResolutionE1D->Fill(eDepTotal/Ev, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
+
 
           if (ch1->GetCurrentFile()->GetName() ==  nonswap) {
             //std::cout << "Testing..." << ch1->GetCurrentFile()->GetName() << ' ' << nuPDG << "Inside nue nonswap\n";
-            nuetonue->Fill(Ev, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
+            nuetonue->Fill(Ev, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG), OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
           }
           else if (ch1->GetCurrentFile()->GetName() == nueswap) {
             //std::cout << "Testing..." << ch1->GetCurrentFile()->GetName() << ' ' << nuPDG << "Inside nue nueswap\n";
-            numutonue->Fill(Ev, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
+            numutonue->Fill(Ev, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG), OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
           }
           else if (ch1->GetCurrentFile()->GetName() == tauswap) {
             std::cerr << "This should not happen (nue in tauswap) \n";
@@ -313,15 +341,22 @@ void FHCMCStatPlots(void) {
           wcvnnc_fromnumu->Fill(cvnnc, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
 
           weDepPimNumu->Fill(eDepPim, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
-          weDepElseNumu->Fill(DepEVis - eDepPim, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
+          weDepElseNumu->Fill(eDepTotal - eDepPim, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
 
           hDepPimRatioM->Fill(Ev, DepPimRatio, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
 
-          hResolutionM->Fill((Ev - RecoEVis)/Ev, Ev, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
+          hResolutionM->Fill((Ev - eDepTotal)/Ev, Ev, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
+
+          hTruevRecoEM->Fill(Ev, eDepTotal, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
+
+          hResolutionM2->Fill(eDepTotal/Ev, Ev, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
+
+          if (2. <= Ev && Ev <= 3.)
+            hResolutionM1D->Fill(eDepTotal/Ev, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
 
           if (ch1->GetCurrentFile()->GetName() ==  nonswap) {
             //std::cout << "Testing..." << ch1->GetCurrentFile()->GetName() << ' ' << nuPDG << "Inside numu nonswap\n";
-            numutonumu->Fill(Ev, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
+            numutonumu->Fill(Ev, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG), OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
           }
           else if (ch1->GetCurrentFile()->GetName() == nueswap) {
             //std::cerr << ch1->GetCurrentFile()->GetName() << ' ' << nuPDG;
@@ -329,7 +364,7 @@ void FHCMCStatPlots(void) {
           }
           else if (ch1->GetCurrentFile()->GetName() == tauswap) {
             //std::cout << "Testing..." << ch1->GetCurrentFile()->GetName() << ' ' << nuPDG << "Inside numu tauswap\n";
-            nuetonumu->Fill(Ev, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
+            nuetonumu->Fill(Ev, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG), OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
           }
           else {
             std::cerr << "This should not happen (file name not recognized) \n";
@@ -342,11 +377,18 @@ void FHCMCStatPlots(void) {
           wcvnnc_fromnutau->Fill(cvnnc, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
 
           weDepPimNutau->Fill(eDepPim, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
-          weDepElseNutau->Fill(DepEVis - eDepPim, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
+          weDepElseNutau->Fill(eDepTotal - eDepPim, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
 
           hDepPimRatioT->Fill(Ev, DepPimRatio, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
 
-          hResolutionT->Fill((Ev - RecoEVis)/Ev, Ev, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
+          hResolutionT->Fill((Ev - eDepTotal)/Ev, Ev, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
+
+          hTruevRecoET->Fill(Ev, eDepTotal, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
+
+          hResolutionT2->Fill(eDepTotal/Ev, Ev, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
+
+          if (3.5 <= Ev && Ev <= 4.5)
+            hResolutionT1D->Fill(eDepTotal/Ev, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
 
           if (ch1->GetCurrentFile()->GetName() == nonswap) {
             //std::cout << "Testing..." << ch1->GetCurrentFile()->GetName() << ' ' << nuPDG << "Inside nutau nonswap\n";
@@ -354,11 +396,11 @@ void FHCMCStatPlots(void) {
           }
           else if (ch1->GetCurrentFile()->GetName() == nueswap) {
             //std::cout << "Testing..." << ch1->GetCurrentFile()->GetName() << ' ' << nuPDG << "Inside nutau nueswap\n";
-            nuetonutau->Fill(Ev, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
+            nuetonutau->Fill(Ev, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG), OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
           }
           else if (ch1->GetCurrentFile()->GetName() == tauswap) {
             //std::cout << "Testing..." << ch1->GetCurrentFile()->GetName() << ' ' << nuPDG << "Inside nutau tauswap\n";
-            numutonutau->Fill(Ev, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
+            numutonutau->Fill(Ev, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG), OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
           }
           else {
             std::cerr << "This should not happen (file name not recognized) \n";
@@ -380,7 +422,7 @@ void FHCMCStatPlots(void) {
 
         hDepPimRatioNC->Fill(Ev, DepPimRatio, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
       }
-    }
+//    }
     if (i % 10000 == 0) std::cout << (float) (i + 1) * 100 / (float) nentries << '%' << '\n';
   }
 
@@ -609,7 +651,7 @@ void FHCMCStatPlots(void) {
   nuetonue->SetLineWidth(2);
   nuetonue->Draw("COLZ");
   nuetonue->SetTitle("P(nu_e -> nu_e) events");
-  nuetonue->GetXaxis()->SetTitle("Energy (GeV)");
+  nuetonue->GetXaxis()->SetTitle("True Energy (GeV)");
   nuetonue->GetYaxis()->SetTitle("Oscillation Probability");
   c1->SaveAs("./Figures/nuetonuehisto.png");
   c1->Clear();
@@ -618,7 +660,7 @@ void FHCMCStatPlots(void) {
   nuetonumu->SetLineWidth(2);
   nuetonumu->Draw("COLZ");
   nuetonumu->SetTitle("P(nu_e -> nu_mu) events");
-  nuetonumu->GetXaxis()->SetTitle("Energy (GeV)");
+  nuetonumu->GetXaxis()->SetTitle("True Energy (GeV)");
   nuetonumu->GetYaxis()->SetTitle("Oscillation Probability");
   c1->SaveAs("./Figures/nuetonumuhisto.png");
   c1->Clear();
@@ -627,7 +669,7 @@ void FHCMCStatPlots(void) {
   nuetonutau->SetLineWidth(2);
   nuetonutau->Draw("COLZ");
   nuetonutau->SetTitle("P(nu_e -> nu_tau) events");
-  nuetonutau->GetXaxis()->SetTitle("Energy (GeV)");
+  nuetonutau->GetXaxis()->SetTitle("True Energy (GeV)");
   nuetonutau->GetYaxis()->SetTitle("Oscillation Probability");
   c1->SaveAs("./Figures/nuetonutauhisto.png");
   c1->Clear();
@@ -636,7 +678,7 @@ void FHCMCStatPlots(void) {
   numutonue->SetLineWidth(2);
   numutonue->Draw("COLZ");
   numutonue->SetTitle("P(nu_mu -> nu_e) events");
-  numutonue->GetXaxis()->SetTitle("Energy (GeV)");
+  numutonue->GetXaxis()->SetTitle("True Energy (GeV)");
   numutonue->GetYaxis()->SetTitle("Oscillation Probability");
   c1->SaveAs("./Figures/numutonuehisto.png");
   c1->Clear();
@@ -645,7 +687,7 @@ void FHCMCStatPlots(void) {
   numutonumu->SetLineWidth(2);
   numutonumu->Draw("COLZ");
   numutonumu->SetTitle("P(nu_mu -> nu_mu) events");
-  numutonumu->GetXaxis()->SetTitle("Energy (GeV)");
+  numutonumu->GetXaxis()->SetTitle("True Energy (GeV)");
   numutonumu->GetYaxis()->SetTitle("Oscillation Probability");
   c1->SaveAs("./Figures/numutonumuhisto.png");
   c1->Clear();
@@ -654,14 +696,14 @@ void FHCMCStatPlots(void) {
   numutonutau->SetLineWidth(2);
   numutonutau->Draw("COLZ");
   numutonutau->SetTitle("P(nu_mu -> nu_tau) events");
-  numutonutau->GetXaxis()->SetTitle("Energy (GeV)");
+  numutonutau->GetXaxis()->SetTitle("True Energy (GeV)");
   numutonutau->GetYaxis()->SetTitle("Oscillation Probability");
   c1->SaveAs("./Figures/numutonutauhisto.png");
   c1->Clear();
   c1->Update();
 
   hDepPimRatioE->Draw("COLZ");
-  hDepPimRatioE->SetTitle("FHC E_{#pi^{-}} / Dep. E for #nu_{e} events (Dep. E <= 10GeV)");
+  hDepPimRatioE->SetTitle("FHC E_{#pi^{-}} / Dep. E for #nu_{e} events");
   hDepPimRatioE->GetXaxis()->SetTitle("True Energy (GeV)");
   hDepPimRatioE->GetYaxis()->SetTitle("E_{#pi^{-}} / Dep. E");
   c1->SaveAs("./Figures/DepPimRatioE.png");
@@ -669,7 +711,7 @@ void FHCMCStatPlots(void) {
   c1->Update();
 
   hDepPimRatioM->Draw("COLZ");
-  hDepPimRatioM->SetTitle("FHC E_{#pi^{-}} / Dep. E for #nu_{#mu} events (Dep. E <= 10GeV)");
+  hDepPimRatioM->SetTitle("FHC E_{#pi^{-}} / Dep. E for #nu_{#mu} events");
   hDepPimRatioM->GetXaxis()->SetTitle("True Energy (GeV)");
   hDepPimRatioM->GetYaxis()->SetTitle("E_{#pi^{-}} / Dep. E");
   c1->SaveAs("./Figures/DepPimRatioM.png");
@@ -677,7 +719,7 @@ void FHCMCStatPlots(void) {
   c1->Update();
 
   hDepPimRatioT->Draw("COLZ");
-  hDepPimRatioT->SetTitle("FHC E_{#pi^{-}} / Dep. E for #nu_{#tau} events (Dep. E <= 10GeV)");
+  hDepPimRatioT->SetTitle("FHC E_{#pi^{-}} / Dep. E for #nu_{#tau} events");
   hDepPimRatioT->GetXaxis()->SetTitle("True Energy (GeV)");
   hDepPimRatioT->GetYaxis()->SetTitle("E_{#pi^{-}} / Dep. E");
   c1->SaveAs("./Figures/DepPimRatioT.png");
@@ -685,7 +727,7 @@ void FHCMCStatPlots(void) {
   c1->Update();
 
   hDepPimRatioNC->Draw("COLZ");
-  hDepPimRatioNC->SetTitle("FHC E_{#pi^{-}} / Dep. E for NC events (Dep. E <= 10GeV)");
+  hDepPimRatioNC->SetTitle("FHC E_{#pi^{-}} / Dep. E for NC events");
   hDepPimRatioNC->GetXaxis()->SetTitle("True Energy (GeV)");
   hDepPimRatioNC->GetYaxis()->SetTitle("E_{#pi^{-}} / Dep. E");
   c1->SaveAs("./Figures/DepPimRatioNC.png");
@@ -693,26 +735,98 @@ void FHCMCStatPlots(void) {
   c1->Update();
 
   hResolutionE->Draw("COLZ");
-  hResolutionE->SetTitle("FHC Fractional Energy Resolution for #nu_{e} (Dep. E <= 10GeV)");
-  hResolutionE->GetXaxis()->SetTitle("Fractional Resolution");
-  hResolutionE->GetYaxis()->SetTitle("True E_{vis} (GeV)");
+  hResolutionE->SetTitle("FHC Fractional Energy Resolution for #nu_{e}");
+  hResolutionE->GetXaxis()->SetTitle("(True E - Reco. E) / True E");
+  hResolutionE->GetYaxis()->SetTitle("True E (GeV)");
   c1->SaveAs("./Figures/ResolutionE.png");
   c1->Clear();
   c1->Update();
 
   hResolutionM->Draw("COLZ");
-  hResolutionM->SetTitle("FHC Fractional Energy Resolution for #nu_{#mu} (Dep. E <= 10GeV)");
-  hResolutionM->GetXaxis()->SetTitle("Fractional Resolution");
-  hResolutionM->GetYaxis()->SetTitle("True E_{vis} (GeV)");
+  hResolutionM->SetTitle("FHC Fractional Energy Resolution for #nu_{#mu}");
+  hResolutionM->GetXaxis()->SetTitle("(True E - Reco. E) / True E");
+  hResolutionM->GetYaxis()->SetTitle("True E (GeV)");
   c1->SaveAs("./Figures/ResolutionM.png");
   c1->Clear();
   c1->Update();
 
   hResolutionT->Draw("COLZ");
-  hResolutionT->SetTitle("FHC Fractional Energy Resolution for #nu_{#tau} (Dep. E <= 10GeV)");
-  hResolutionT->GetXaxis()->SetTitle("Fractional Resolution");
-  hResolutionT->GetYaxis()->SetTitle("True E_{vis} (GeV)");
+  hResolutionT->SetTitle("FHC Fractional Energy Resolution for #nu_{#tau}");
+  hResolutionT->GetXaxis()->SetTitle("(True E - Reco. E) / True E");
+  hResolutionT->GetYaxis()->SetTitle("True E (GeV)");
   c1->SaveAs("./Figures/ResolutionT.png");
+  c1->Clear();
+  c1->Update();
+
+  hTruevRecoEE->Draw("COLZ");
+  hTruevRecoEE->SetTitle("FHC #nu_{e} energy");
+  hTruevRecoEE->GetXaxis()->SetTitle("True E (GeV)");
+  hTruevRecoEE->GetYaxis()->SetTitle("Reco. E (GeV)");
+  c1->SaveAs("./Figures/TruevRecoEVE.png");
+  c1->Clear();
+  c1->Update();
+
+  hTruevRecoEM->Draw("COLZ");
+  hTruevRecoEM->SetTitle("FHC #nu_{#mu} energy");
+  hTruevRecoEM->GetXaxis()->SetTitle("True E (GeV)");
+  hTruevRecoEM->GetYaxis()->SetTitle("Reco. E (GeV)");
+  c1->SaveAs("./Figures/TruevRecoEVM.png");
+  c1->Clear();
+  c1->Update();
+
+  hTruevRecoET->Draw("COLZ");
+  hTruevRecoET->SetTitle("FHC #nu_{#tau} energy");
+  hTruevRecoET->GetXaxis()->SetTitle("True E (GeV)");
+  hTruevRecoET->GetYaxis()->SetTitle("Reco. E (GeV)");
+  c1->SaveAs("./Figures/TruevRecoEVT.png");
+  c1->Clear();
+  c1->Update();
+
+  hResolutionE2->Draw("COLZ");
+  hResolutionE2->SetTitle("FHC Energy Resolution for #nu_{e}");
+  hResolutionE2->GetXaxis()->SetTitle("Reco. E / True E");
+  hResolutionE2->GetYaxis()->SetTitle("True E (GeV)");
+  c1->SaveAs("./Figures/ResolutionE2.png");
+  c1->Clear();
+  c1->Update();
+
+  hResolutionM2->Draw("COLZ");
+  hResolutionM2->SetTitle("FHC Energy Resolution for #nu_{#mu}");
+  hResolutionM2->GetXaxis()->SetTitle("Reco. E / True E");
+  hResolutionM2->GetYaxis()->SetTitle("True E (GeV)");
+  c1->SaveAs("./Figures/ResolutionM2.png");
+  c1->Clear();
+  c1->Update();
+
+  hResolutionT2->Draw("COLZ");
+  hResolutionT2->SetTitle("FHC Energy Resolution for #nu_{#tau}");
+  hResolutionT2->GetXaxis()->SetTitle("Reco. E / True E");
+  hResolutionT2->GetYaxis()->SetTitle("True E (GeV)");
+  c1->SaveAs("./Figures/ResolutionT2.png");
+  c1->Clear();
+  c1->Update();
+
+  hResolutionE1D->SetLineWidth(2);
+  hResolutionE1D->SetTitle("FHC Energy Resolution for #nu_{e} (2 GeV < Ev < 3 GeV)");
+  hResolutionE1D->GetXaxis()->SetTitle("Reco. E / True E");
+  hResolutionE1D->Draw("HIST");
+  c1->SaveAs("./Figures/ResolutionE1D.png");
+  c1->Clear();
+  c1->Update();
+
+  hResolutionM1D->SetLineWidth(2);
+  hResolutionM1D->SetTitle("FHC Energy Resolution for #nu_{#mu} (2 GeV < Ev < 3 GeV)");
+  hResolutionM1D->GetXaxis()->SetTitle("Reco. E / True E");
+  hResolutionM1D->Draw("HIST");
+  c1->SaveAs("./Figures/ResolutionM1D.png");
+  c1->Clear();
+  c1->Update();
+
+  hResolutionT1D->SetLineWidth(2);
+  hResolutionT1D->SetTitle("FHC Energy Resolution for #nu_{#tau} (3.5 GeV < Ev < 4.5 GeV)");
+  hResolutionT1D->GetXaxis()->SetTitle("Reco. E / True E");
+  hResolutionT1D->Draw("HIST");
+  c1->SaveAs("./Figures/ResolutionT1D.png");
   c1->Clear();
   c1->Update();
 

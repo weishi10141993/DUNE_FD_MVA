@@ -271,40 +271,40 @@ void CutTest(void) {
         std::cerr << "This should not happen (file name not recognized) \n";
     }
 
-    //Only considering events with energy under 10GeV
-    if (DepEVis <= 10) {
+    //Currently configured for nu_mus
 
-        if ((nuPDG == 16 || nuPDG == -16) && isCC == 1 && ch1->GetCurrentFile()->GetName() == tauswap) {
-            trueSignal += OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / tauswapPOT);
-        }
-        if (cvnnue < 0.85 && cvnnumu < 0.5) {
-          if (ch1->GetCurrentFile()->GetName() == nonswap) {
-            if (isCC)
-              cutCounter += OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / nonswapPOT);
-            else
-              cutCounter += (1./3.) * (years * POTperYear / nonswapPOT);
-          }
-          else if (ch1->GetCurrentFile()->GetName() == nueswap) {
-            if (isCC)
-              cutCounter += OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / nueswapPOT);
-            else
-              cutCounter += (1./3.) * (years * POTperYear / nueswapPOT);
-          }
-          else if (ch1->GetCurrentFile()->GetName() == tauswap) {
-            if (isCC) {
-              if (nuPDG == 16 || nuPDG == -16)
-                trueSignalCut += OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / tauswapPOT);
-              else
-                cutCounter += OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / tauswapPOT);
-            }
-            else
-              cutCounter += (1. / 3.) * (years * POTperYear / tauswapPOT);
-          }
-          else {
-            std::cerr << "This should not happen (file name not recognized)";
-          }
-        }
-    }
+     if ((nuPDG == 12 && isCC == 1 && ch1->GetCurrentFile()->GetName() == nueswap) {
+         trueSignal += OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / nueswapPOT);
+     }
+     if (cvnnue > 0.85 && cvnnumu < 0.5) {
+       if (ch1->GetCurrentFile()->GetName() == tauswap) {
+         if (isCC)
+           cutCounter += OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / tauswapPOT);
+         else
+           cutCounter += (1./3.) * (years * POTperYear / tauswapPOT);
+       }
+       else if (ch1->GetCurrentFile()->GetName() == nonswap) {
+         if (isCC)
+           cutCounter += OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / nonswapPOT);
+         else
+           cutCounter += (1./3.) * (years * POTperYear / nonswapPOT);
+       }
+       else if (ch1->GetCurrentFile()->GetName() == nueswap) {
+         if (isCC) {
+           if (nuPDG == 12){
+             trueSignalCut += OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / nueswapPOT);
+             cutCounter += OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / nueswapPOT);
+           }
+           else
+             cutCounter += OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / nueswapPOT);
+         }
+         else
+           cutCounter += (1. / 3.) * (years * POTperYear / nueswapPOT);
+       }
+       else {
+         std::cerr << "This should not happen (file name not recognized)";
+       }
+     }
   if (i % 10000 == 0)
     std::cerr << 100 * (float)(i + 1) / (float) nentries << "%" << '\n';
   }
@@ -313,10 +313,10 @@ void CutTest(void) {
   trueSignal *= 40. / 1.13;
   trueSignalCut *= 40. / 1.13;
 
-
+//Cutcounter is S + B
   efficiency = trueSignalCut / trueSignal;
   purity = trueSignalCut / cutCounter;
-  sensitivity = trueSignalCut / Sqrt(cutCounter);
+  sensitivity = trueSignalCut / Sqrt(cutCounter - trueSignalCut); //S / Sqrt(B)
 
 
   std::cout << "trueSignalCut = " << trueSignalCut << '\n';
@@ -374,7 +374,7 @@ void CutTest(void) {
 
   hStack->Draw("HIST");
   hStack->SetTitle("FHC MC Events that pass cut of (cvnnue < 0.85 && cvnnumu < 0.5)");
-  hStack->GetXaxis()->SetTitle("Reco E_vis (GeV)");
+  hStack->GetXaxis()->SetTitle("Reco E (GeV)");
   leg->Draw();
   c1->SaveAs("./Figures/StackedHistTest.png");
   c1->Clear();
