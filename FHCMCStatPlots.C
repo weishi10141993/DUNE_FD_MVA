@@ -185,6 +185,8 @@ void FHCMCStatPlots(void) {
   double DepPimRatio = 0.;
   double RecoLepEnNumu = 0.;
   double RecoLepEnNue = 0.;
+  double eDepHad = 0.;
+  double eDepLep = 0.;
 
   double eRecoP = 0.;
   double eRecoN = 0.;
@@ -292,9 +294,11 @@ void FHCMCStatPlots(void) {
 
   for (auto i = 0; i < nentries; i++) {
     ch1->GetEntry(i);
-    eDepTotal = eDepP + eDepN + eDepPip + eDepPim + eDepPi0 + eDepOther + RecoLepEnNumu + RecoLepEnNue; //Attempt at reconstructed energy
+    eDepHad = eDepP + eDepN + eDepPip + eDepPim + eDepPi0 + eDepOther; //Attempt at reconstructed energy
+    eDepLep = RecoLepEnNumu + RecoLepEnNue;
+    eDepTotal = eDepLep + eDepHad;
     //eRecoTotal = eRecoP + eRecoN + eRecoPip + eRecoPim + eRecoPi0 + eRecoOther;
-    DepPimRatio = eDepPim / eDepTotal;
+    DepPimRatio = eDepPim / eDepHad;
 //    if (eDepTotal <= 10) {
       if (isCC) {
         //Check Flavor
@@ -305,7 +309,7 @@ void FHCMCStatPlots(void) {
           wcvnnc_fromnue->Fill(cvnnc, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
 
           weDepPimNue->Fill(eDepPim, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
-          weDepElseNue->Fill(eDepTotal - eDepPim, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
+          weDepElseNue->Fill(eDepHad - eDepPim, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
 
           hDepPimRatioE->Fill(Ev, DepPimRatio, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
 
@@ -341,7 +345,7 @@ void FHCMCStatPlots(void) {
           wcvnnc_fromnumu->Fill(cvnnc, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
 
           weDepPimNumu->Fill(eDepPim, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
-          weDepElseNumu->Fill(eDepTotal - eDepPim, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
+          weDepElseNumu->Fill(eDepHad - eDepPim, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
 
           hDepPimRatioM->Fill(Ev, DepPimRatio, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
 
@@ -377,7 +381,7 @@ void FHCMCStatPlots(void) {
           wcvnnc_fromnutau->Fill(cvnnc, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
 
           weDepPimNutau->Fill(eDepPim, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
-          weDepElseNutau->Fill(eDepTotal - eDepPim, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
+          weDepElseNutau->Fill(eDepHad - eDepPim, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
 
           hDepPimRatioT->Fill(Ev, DepPimRatio, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG));
 

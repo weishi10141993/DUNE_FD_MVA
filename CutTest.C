@@ -89,6 +89,8 @@ double OscWeight(const TString filename, const double Ev, const int nuPDG) {
 
 //This function is what I used to calculate the POT numbers for each MC swapfile
 void POTNumber(void) {
+
+
   TChain* ch1 = new TChain("meta");
   ch1->Add(nonswap);
   ch1->Add(nueswap);
@@ -126,8 +128,10 @@ void POTNumber(void) {
 
 
 void CutTest(void) {
+   gStyle->SetOptStat(0);
   TCanvas* c1 = new TCanvas("c1", "c1", 600, 600);
   c1->SetRightMargin(0.1);
+  c1->SetLeftMargin(0.15);
 
 
   TChain* ch1 = new TChain("cafTree");
@@ -147,6 +151,13 @@ void CutTest(void) {
   TH1D* hWLBkgdM = new TH1D("WLBkgdM", "WLBkgdM", 25, 0., 10.);
   TH1D* hWLBkgdT = new TH1D("WLBkgdT", "WLBkgdT", 25, 0., 10.);
 
+  TH1D hPurity = TH1D("hPurity", "hPurity", 25, 0., 10.);
+  TH1D hEfficiency = TH1D("hEfficiency", "hEfficiency", 25, 0., 10.);
+  TH1D hSignificance = TH1D("hSignificance", "hSignificance", 25, 0., 5.);
+
+  TH1D* hTrueSignal = new TH1D("hTrueSignal", "hTrueSignal", 25, 0., 10.);
+  TH1D* hTrueSignalCut = new TH1D("hTrueSignalCut", "hTrueSignalCut", 25, 0., 10.);
+  TH1D* hCutCounter = new TH1D("hCutCounter", "hCutCounter", 25, 0., 10.);
 
 
   double Ev = 0.;
@@ -164,8 +175,11 @@ void CutTest(void) {
   double eDepPim = 0.;
   double eDepPi0 = 0.;
   double eDepOther = 0.;
-  double DepEVis = 0.;
+  double eDepTotal = 0.;
   double DepPimRatio = 0.;
+  double RecoLepEnNumu = 0.;
+  double RecoLepEnNue = 0.;
+  double eDepHad = 0.;
 
   //Scaling
   double years = 3.5; //Exposure time
@@ -214,6 +228,13 @@ void CutTest(void) {
   ch1->SetBranchStatus("eDepOther", true);
   ch1->SetBranchAddress("eDepOther", &eDepOther);
 
+  ch1->SetBranchStatus("RecoLepEnNumu", true);
+  ch1->SetBranchAddress("RecoLepEnNumu", &RecoLepEnNumu);
+
+  ch1->SetBranchStatus("RecoLepEnNue", true);
+  ch1->SetBranchAddress("RecoLepEnNue", &RecoLepEnNue);
+
+
   int nentries = ch1->GetEntries();
 
 
@@ -233,73 +254,88 @@ void CutTest(void) {
 
   for (auto i = 0; i < nentries; i++) {
     ch1->GetEntry(i);
-    DepEVis = eDepP + eDepN + eDepPip + eDepPim + eDepPi0 + eDepOther;
-    DepPimRatio = eDepPim / DepEVis;
+    eDepTotal = eDepP + eDepN + eDepPip + eDepPim + eDepPi0 + eDepOther + RecoLepEnNumu + RecoLepEnNue;
+    eDepHad = eDepP + eDepN + eDepPip + eDepPim + eDepPi0 + eDepOther;
+    DepPimRatio = eDepPim / eDepHad;
 
     if (cvnnue < 0.85 && cvnnumu < 0.5) {
       if (ch1->GetCurrentFile()->GetName() == nonswap) {
         if (isCC) {
           if (nuPDG == 12 || nuPDG == -12)
-            hWLBkgdE->Fill(DepEVis, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / nonswapPOT));
+            hWLBkgdE->Fill(eDepTotal, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / nonswapPOT));
           else
-            hWLBkgdM->Fill(DepEVis, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / nonswapPOT));
+            hWLBkgdM->Fill(eDepTotal, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / nonswapPOT));
         }
         else
-          hNCBkgd->Fill(DepEVis, (1./3.) * (years * POTperYear / nonswapPOT));
+          hNCBkgd->Fill(eDepTotal, (1./3.) * (years * POTperYear / nonswapPOT));
       }
       else if (ch1->GetCurrentFile()->GetName() == nueswap) {
         if (isCC) {
           if (nuPDG == 12 || nuPDG == -12)
-            hWLBkgdE->Fill(DepEVis, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / nueswapPOT));
+            hWLBkgdE->Fill(eDepTotal, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / nueswapPOT));
           else
-            hWLBkgdT->Fill(DepEVis, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / nueswapPOT));
+            hWLBkgdT->Fill(eDepTotal, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / nueswapPOT));
         }
         else
-          hNCBkgd->Fill(DepEVis, (1./3.) * (years * POTperYear / nueswapPOT));
+          hNCBkgd->Fill(eDepTotal, (1./3.) * (years * POTperYear / nueswapPOT));
       }
       else if (ch1->GetCurrentFile()->GetName() == tauswap) {
         if (isCC) {
           if (nuPDG == 16 || nuPDG == -16)
-            hSignal->Fill(DepEVis, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / tauswapPOT));
+            hSignal->Fill(eDepTotal, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / tauswapPOT));
           else
-            hWLBkgdM->Fill(DepEVis, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / tauswapPOT));
+            hWLBkgdM->Fill(eDepTotal, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / tauswapPOT));
         }
         else
-          hNCBkgd->Fill(DepEVis, (1./3.) * (years * POTperYear / tauswapPOT));
+          hNCBkgd->Fill(eDepTotal, (1./3.) * (years * POTperYear / tauswapPOT));
       }
       else
         std::cerr << "This should not happen (file name not recognized) \n";
     }
 
-    //Currently configured for nu_mus
+    //Currently configured for nu_es
 
-     if ((nuPDG == 12 && isCC == 1 && ch1->GetCurrentFile()->GetName() == nueswap) {
-         trueSignal += OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / nueswapPOT);
+     if (nuPDG == 16 && isCC == 1 && ch1->GetCurrentFile()->GetName() == tauswap) {
+         trueSignal += OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / tauswapPOT);
+         hTrueSignal->Fill(Ev, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / tauswapPOT));
      }
-     if (cvnnue > 0.85 && cvnnumu < 0.5) {
-       if (ch1->GetCurrentFile()->GetName() == tauswap) {
-         if (isCC)
-           cutCounter += OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / tauswapPOT);
-         else
-           cutCounter += (1./3.) * (years * POTperYear / tauswapPOT);
-       }
-       else if (ch1->GetCurrentFile()->GetName() == nonswap) {
-         if (isCC)
+     if (cvnnue < 0.85 && cvnnumu < 0.5) {
+       if (ch1->GetCurrentFile()->GetName() == nonswap) {
+         if (isCC){
            cutCounter += OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / nonswapPOT);
-         else
-           cutCounter += (1./3.) * (years * POTperYear / nonswapPOT);
+           hCutCounter->Fill(Ev, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / nonswapPOT));
+        }
+         else {
+           cutCounter += (1./3.) * (years * POTperYear / tauswapPOT);
+           hCutCounter->Fill(Ev, (1./3.) * (years * POTperYear / tauswapPOT));
+         }
        }
        else if (ch1->GetCurrentFile()->GetName() == nueswap) {
          if (isCC) {
-           if (nuPDG == 12){
-             trueSignalCut += OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / nueswapPOT);
-             cutCounter += OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / nueswapPOT);
+           cutCounter += OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / nueswapPOT);
+           hCutCounter->Fill(Ev, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / nueswapPOT));
+         }
+         else {
+           cutCounter += (1./3.) * (years * POTperYear / nueswapPOT);
+           hCutCounter->Fill(Ev, (1./3.) * (years * POTperYear / nueswapPOT));
+        }
+       }
+       else if (ch1->GetCurrentFile()->GetName() == tauswap) {
+         if (isCC) {
+           if (nuPDG == 16){
+             trueSignalCut += OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / tauswapPOT);
+             cutCounter += OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / tauswapPOT);
+
+             hTrueSignalCut->Fill(Ev, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / tauswapPOT));
+             hCutCounter->Fill(Ev, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / tauswapPOT));
            }
            else
-             cutCounter += OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / nueswapPOT);
+             cutCounter += OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / tauswapPOT);
+             hCutCounter->Fill(Ev, OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (years * POTperYear / tauswapPOT));
          }
          else
-           cutCounter += (1. / 3.) * (years * POTperYear / nueswapPOT);
+           cutCounter += (1. / 3.) * (years * POTperYear / tauswapPOT);
+           hCutCounter->Fill(Ev, (1. / 3.) * (years * POTperYear / tauswapPOT));
        }
        else {
          std::cerr << "This should not happen (file name not recognized)";
@@ -317,6 +353,9 @@ void CutTest(void) {
   efficiency = trueSignalCut / trueSignal;
   purity = trueSignalCut / cutCounter;
   sensitivity = trueSignalCut / Sqrt(cutCounter - trueSignalCut); //S / Sqrt(B)
+
+  hEfficiency = (* hTrueSignalCut) / (* hTrueSignal);
+  hPurity = (* hTrueSignalCut) / (* hCutCounter);
 
 
   std::cout << "trueSignalCut = " << trueSignalCut << '\n';
@@ -378,6 +417,24 @@ void CutTest(void) {
   leg->Draw();
   c1->SaveAs("./Figures/StackedHistTest.png");
   c1->Clear();
+  c1->Update();
 
+  hEfficiency.SetLineWidth(2);
+  hEfficiency.SetTitle("FHC #nu_{#tau} signal");
+  hEfficiency.GetXaxis()->SetTitle("True E (GeV)");
+  hEfficiency.GetYaxis()->SetTitle("Signal Efficiency");
+  hEfficiency.Draw("HIST");
+  c1->SaveAs("./Figures/NutauEfficiency.png");
+  c1->Clear();
+  c1->Update();
+
+  hPurity.SetLineWidth(2);
+  hPurity.SetTitle("FHC #nu_{#tau} signal");
+  hPurity.GetXaxis()->SetTitle("True E (GeV)");
+  hPurity.GetYaxis()->SetTitle("Signal Purity");
+  hPurity.Draw("HIST");
+  c1->SaveAs("./Figures/NutauPurity.png");
+  c1->Clear();
+  c1->Update();
 
 }

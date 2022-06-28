@@ -15,8 +15,7 @@ TString tauswap = "/storage/shared/wshi/CAFs/FD/FD_FHC_tauswap.root";
 
 
 void NNTest(void) {
-   std::cout << "This MVA test is done with half of the testing/training data taken from cafTree."
-      " Attempting both BDT and Cuts algorithms." << std::endl;
+   std::cout << "June 28: Using Hadron energy and Pi- energy separately"  << std::endl;
    TFile* inputFile = new TFile("/storage/shared/ncchambe/FDMonteCarlo/FHCSplitMC.root", "READ");
    TTree* NuTauFromTauswap = (TTree*)inputFile->Get("NuTauFromTauswap");
    TTree* NuTauFromNueswap = (TTree*)inputFile->Get("NuTauFromNueswap");
@@ -40,7 +39,7 @@ void NNTest(void) {
       //   TestNumuFromNonswap, TestNumuFromTauswap, TestNCTree
     };
 
-   TFile* outputFile = new TFile("/storage/shared/ncchambe/FDMonteCarlo/NNTest3.root", "RECREATE");
+   TFile* outputFile = new TFile("/storage/shared/ncchambe/FDMonteCarlo/NNTest5.root", "RECREATE");
 
    TMVA::Factory* factory = new TMVA::Factory("NuTauClassification", outputFile,
          "!V:!Silent:Color:DrawProgressBar:AnalysisType=Classification");
@@ -76,6 +75,8 @@ void NNTest(void) {
       i->SetBranchStatus("niother", true);
       i->SetBranchStatus("nipip", true);
       i->SetBranchStatus("niem", true);
+      i->SetBranchStatus("RecoLepEnNue", true);
+      i->SetBranchStatus("RecoLepEnNumu", true);
    }
 
    dataloader->SetWeightExpression("POTScaledOscweight");
@@ -118,23 +119,26 @@ void NNTest(void) {
    dataloader->AddVariable("cvnnue", 'F');
    dataloader->AddVariable("cvnnumu", 'F');
    dataloader->AddVariable("cvnnutau", 'F');
-   dataloader->AddVariable("EPimRatio := eDepPim / (eDepP + eDepN + eDepPip + eDepPim + eDepPi0 + eDepOther)", 'F');
+   //dataloader->AddVariable("EPimRatio := eDepPim / (eDepP + eDepN + eDepPip + eDepPim + eDepPi0 + eDepOther)", 'F');
+   dataloader->AddVariable("EHad := eDepP + eDepN + eDepPip + eDepPim + eDepPi0 + eDepOther", 'F');
+   dataloader->AddVariable("eDepPim", 'F');
    dataloader->AddVariable("nipim", 'I');
    dataloader->AddVariable("cvnnc", 'F');
-   dataloader->AddVariable("NHadrons := nik0 + nikm + nikp + niem + niother + nipip + nipim", 'I');
+   //dataloader->AddVariable("NHadrons := nik0 + nikm + nikp + niem + niother + nipip + nipim", 'I');
 
-   dataloader->AddSpectator("RecoEVis := eRecoPim + eRecoPip + eRecoPi0 + eRecoP + eRecoN + eRecoOther", 'F');
+   //dataloader->AddSpectator("eDepTotal := eRecoPim + eRecoPip + eRecoPi0 + eRecoP + eRecoN + eRecoOther", 'F');
    dataloader->AddSpectator("Ev", 'F');
    dataloader->AddSpectator("POTScaledOscweight", 'F');
 
-   TCut mycut = "(cvnnue > 0.) && (cvnnumu > 0.) && (cvnnutau > 0.) && (cvnnc > 0.) && (nuPDG > 0)";
+   TCut signalcut = "(cvnnue > 0.) && (cvnnumu > 0.) && (cvnnutau > 0.) && (cvnnc > 0.) && (nuPDG > 0)";
+   TCut backgroundcut = "(cvnnue > 0.) && (cvnnumu > 0.) && (cvnnutau > 0.) && (cvnnc > 0.)";
 
-   dataloader->PrepareTrainingAndTestTree(mycut, mycut, "");
+   dataloader->PrepareTrainingAndTestTree(signalcut, backgroundcut, "");
 
    //factory->BookMethod(dataloader, TMVA::Types::kCuts, "Cuts",
    //      "!H:!V:FitMethod=MC:EffSel:VarProp=FSmart");
-   factory->BookMethod(dataloader, TMVA::Types::kPDERS, "PDERS",
-         "!H:!V:NormTree=T:VolumeRangeMode=Adaptive:KernelEstimator=Gauss:GaussSigma=0.3:NEventsMin=400:NEventsMax=600");
+   //factory->BookMethod(dataloader, TMVA::Types::kPDERS, "PDERS",
+   //      "!H:!V:NormTree=T:VolumeRangeMode=Adaptive:KernelEstimator=Gauss:GaussSigma=0.3:NEventsMin=400:NEventsMax=600");
    factory->BookMethod(dataloader, TMVA::Types::kBDT, "BDT", "");
    //factory->BookMethod(dataloader, TMVA::Types::kSVM, "SVM", "");
    /*factory->BookMethod(dataloader, TMVA::Types::kDL, "DNN_CPU",

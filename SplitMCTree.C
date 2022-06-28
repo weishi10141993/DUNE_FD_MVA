@@ -106,7 +106,8 @@ void SplitMCTree(void) {
    TFile* outputFile = new TFile("/storage/shared/ncchambe/FDMonteCarlo/FHCSplitMC.root", "RECREATE");
 
    //Need 6 trees for CC: taus from tauswap, taus from nueswap, etc...
-   TTree* NuTauFromTauswap = ch1->CloneTree(0);
+   TTree* NuTauSignalFromTauswap = ch1->CloneTree(0);
+   TTree* NuTauBkgdFromTauswap = ch1->CloneTree(0);
    TTree* NuTauFromNueswap = ch1->CloneTree(0);
    TTree* NueFromNonswap = ch1->CloneTree(0);
    TTree* NueFromNueswap = ch1->CloneTree(0);
@@ -114,7 +115,8 @@ void SplitMCTree(void) {
    TTree* NumuFromTauswap = ch1->CloneTree(0);
    TTree* NCTree = NCInputTree->CloneTree(0);
 
-   TTree* TestNuTauFromTauswap = ch2->CloneTree(0);
+   TTree* TestNuTauSignalFromTauswap = ch2->CloneTree(0);
+   TTree* TestNuTauBkgdFromTauswap = ch2->CloneTree(0);
    TTree* TestNuTauFromNueswap = ch2->CloneTree(0);
    TTree* TestNueFromNonswap = ch2->CloneTree(0);
    TTree* TestNueFromNueswap = ch2->CloneTree(0);
@@ -137,7 +139,8 @@ void SplitMCTree(void) {
    ch2->SetBranchAddress("isCC", &isCC);
    ch2->SetBranchAddress("Ev", &Ev);
 
-   NuTauFromTauswap->SetBranchStatus("*", true);
+   NuTauSignalFromTauswap->SetBranchStatus("*", true);
+   NuTauBkgdFromTauswap->SetBranchStatus("*", true);
    NuTauFromNueswap->SetBranchStatus("*", true);
    NueFromNonswap->SetBranchStatus("*", true);
    NueFromNueswap->SetBranchStatus("*", true);
@@ -146,7 +149,8 @@ void SplitMCTree(void) {
    NCTree->SetBranchStatus("*", true);
    NCTree->SetBranchAddress("isCC", &isCC);
 
-   TestNuTauFromTauswap->SetBranchStatus("*", true);
+   TestNuTauSignalFromTauswap->SetBranchStatus("*", true);
+   TestNuTauBkgdFromTauswap->SetBranchStatus("*", true);
    TestNuTauFromNueswap->SetBranchStatus("*", true);
    TestNueFromNonswap->SetBranchStatus("*", true);
    TestNueFromNueswap->SetBranchStatus("*", true);
@@ -155,7 +159,8 @@ void SplitMCTree(void) {
    TestNCTree->SetBranchStatus("*", true);
    TestNCTree->SetBranchAddress("isCC", &isCC);
 
-   NuTauFromTauswap->Branch("POTScaledOscweight", &POTScaledOscweight);
+   NuTauSignalFromTauswap->Branch("POTScaledOscweight", &POTScaledOscweight);
+   NuTauBkgdFromTauswap->Branch("POTScaledOscweight", &POTScaledOscweight);
    NuTauFromNueswap->Branch("POTScaledOscweight", &POTScaledOscweight);
    NueFromNonswap->Branch("POTScaledOscweight", &POTScaledOscweight);
    NueFromNueswap->Branch("POTScaledOscweight", &POTScaledOscweight);
@@ -163,7 +168,8 @@ void SplitMCTree(void) {
    NumuFromTauswap->Branch("POTScaledOscweight", &POTScaledOscweight);
    NCTree->Branch("POTScaledOscweight", &POTScaledOscweight);
 
-   TestNuTauFromTauswap->Branch("POTScaledOscweight", &POTScaledOscweight);
+   TestNuTauSignalFromTauswap->Branch("POTScaledOscweight", &POTScaledOscweight);
+   TestNuTauBkgdFromTauswap->Branch("POTScaledOscweight", &POTScaledOscweight);
    TestNuTauFromNueswap->Branch("POTScaledOscweight", &POTScaledOscweight);
    TestNueFromNonswap->Branch("POTScaledOscweight", &POTScaledOscweight);
    TestNueFromNueswap->Branch("POTScaledOscweight", &POTScaledOscweight);
@@ -192,7 +198,10 @@ void SplitMCTree(void) {
       ch1->GetEntry(i);
       if (isCC && (nuPDG == 16 || nuPDG == -16) && ch1->GetCurrentFile()->GetName() == tauswap) {
          POTScaledOscweight = OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (scalefactor * POTperYear / tauswapPOT);
-         NuTauFromTauswap->Fill();
+         if (nuPDG == 16)
+            NuTauSignalFromTauswap->Fill();
+         else if (nuPDG == -16)
+            NuTauBkgdFromTauswap->Fill();
       }
       else if (isCC && (nuPDG == 16 || nuPDG == -16) && ch1->GetCurrentFile()->GetName() == nueswap) {
          POTScaledOscweight = OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (scalefactor * POTperYear / nueswapPOT);
@@ -222,7 +231,10 @@ void SplitMCTree(void) {
       ch2->GetEntry(i);
       if (isCC && (nuPDG == 16 || nuPDG == -16) && ch2->GetCurrentFile()->GetName() == tauswap) {
          POTScaledOscweight = OscWeight(ch2->GetCurrentFile()->GetName(), Ev, nuPDG) * (scalefactor * POTperYear / tauswapPOT);
-         TestNuTauFromTauswap->Fill();
+         if (nuPDG == 16)
+            TestNuTauSignalFromTauswap->Fill();
+         else if (nuPDG == -16)
+            TestNuTauBkgdFromTauswap->Fill();
       }
       else if (isCC && (nuPDG == 16 || nuPDG == -16) && ch2->GetCurrentFile()->GetName() == nueswap) {
          POTScaledOscweight = OscWeight(ch2->GetCurrentFile()->GetName(), Ev, nuPDG) * (scalefactor * POTperYear / nueswapPOT);
@@ -247,14 +259,16 @@ void SplitMCTree(void) {
       if (i % 10000 == 0) std::cerr << (float)(i + 1) / (float)nentries2 << std::endl;
    }
 
-   outputFile->WriteObject(NuTauFromTauswap, "NuTauFromTauswap");
+   outputFile->WriteObject(NuTauSignalFromTauswap, "NuTauSignalFromTauswap");
+   outputFile->WriteObject(NuTauBkgdFromTauswap, "NuTauBkgdFromTauswap");
    outputFile->WriteObject(NuTauFromNueswap, "NuTauFromNueswap");
    outputFile->WriteObject(NueFromNonswap, "NueFromNonswap");
    outputFile->WriteObject(NueFromNueswap, "NueFromNueswap");
    outputFile->WriteObject(NumuFromNonswap, "NumuFromNonswap");
    outputFile->WriteObject(NumuFromTauswap, "NumuFromTauswap");
    outputFile->WriteObject(NCTree, "NCTree");
-   outputFile->WriteObject(TestNuTauFromTauswap, "TestNuTauFromTauswap");
+   outputFile->WriteObject(TestNuTauSignalFromTauswap, "TestNuTauSignalFromTauswap");
+   outputFile->WriteObject(TestNuTauBkgdFromTauswap, "TestNuTauBkgdFromTauswap");
    outputFile->WriteObject(TestNuTauFromNueswap, "TestNuTauFromNueswap");
    outputFile->WriteObject(TestNueFromNonswap, "TestNueFromNonswap");
    outputFile->WriteObject(TestNueFromNueswap, "TestNueFromNueswap");
