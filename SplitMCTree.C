@@ -18,71 +18,112 @@ const double LOSC = 1300.; //In km
 const double THETA_23 = 0.859;
 const double THETA_13 = 0.150;
 
-TString nonswap = "/storage/shared/wshi/CAFs/FD/FD_FHC_nonswap.root";
-TString nueswap = "/storage/shared/wshi/CAFs/FD/FD_FHC_nueswap.root";
-TString tauswap = "/storage/shared/wshi/CAFs/FD/FD_FHC_tauswap.root";
+TString FHCnonswap = "/storage/shared/wshi/CAFs/FD/FD_FHC_nonswap.root";
+TString FHCnueswap = "/storage/shared/wshi/CAFs/FD/FD_FHC_nueswap.root";
+TString FHCtauswap = "/storage/shared/wshi/CAFs/FD/FD_FHC_tauswap.root";
+
+TString RHCnonswap = "/storage/shared/wshi/CAFs/FD/FD_RHC_nonswap.root";
+TString RHCnueswap = "/storage/shared/wshi/CAFs/FD/FD_RHC_nueswap.root";
+TString RHCtauswap = "/storage/shared/wshi/CAFs/FD/FD_RHC_tauswap.root";
 
 double POTperYear = 1.1e21;
-double nonswapPOT = 1.62824e24;
-double nueswapPOT = 1.64546e24;
-double tauswapPOT = 5.18551e24;
-double scalefactor = 40. / 1.13;
+double FHCnonswapPOT = 1.62824e24;
+double FHCnueswapPOT = 1.64546e24;
+double FHCtauswapPOT = 5.18551e24;
 
-double OscWeight(const TString filename, const double Ev, const int nuPDG) {
+double RHCnonswapPOT = 3.27608e+24;
+double RHCnueswapPOT = 3.24713e+24;
+double RHCtauswapPOT = 8.58955e+24;
+
+double scaleCorrection = 40. / 1.13;
+
+double OscWeight(const TString filename, const double Ev, const int nuPDG, const double delmsq, const double theta_23, const double theta_13) {
   //First check flavor, then check which file it came from. Apply appropriate oscillation probability
   if (nuPDG == 12 || nuPDG == -12) {
-    if (filename == nonswap)
-      return 1. - Power(Sin(2 * THETA_13) * Sin((Pi() * DELMSQ_31 * LOSC) / (2.48 * Ev)), 2.); //Apply nue disappearance
-    else if (filename == nueswap)
-      return Power(Sin(THETA_23) * Sin(2 * THETA_13) * Sin((Pi() * DELMSQ_31 * LOSC) / (2.48 * Ev)), 2.); //Apply numu->nue
-    else if (filename == tauswap) {
-      std::cerr << "This should not happen: (nu_e in tauswap) \n";
+      if (filename == FHCnonswap || filename == RHCnonswap) {
+         return 1. - Power(Sin(2 * theta_13) * Sin((Pi() * delmsq * LOSC) / (2.48 * Ev)), 2.); //Apply nue disappearance
+      }
+      else if (filename == FHCnueswap || filename == RHCnueswap) {
+         return Power(Sin(theta_23) * Sin(2 * theta_13) * Sin((Pi() * delmsq * LOSC) / (2.48 * Ev)), 2.); //Apply numu->nue
+      }
+      else if (filename == FHCtauswap || filename == RHCtauswap) {
+         std::cerr << "This should not happen: (nu_e in tauswap) \n";
+         return 0.;
+      }
+      else {
+         std::cerr << "This should not happen: (File name not recognized) \n";
+         return 0.;
+      }
+   }
+   else if (nuPDG == 14 || nuPDG == -14) {
+      if (filename == FHCnonswap || filename == RHCnonswap) {
+         return 1. - Power(Sin(2 * theta_23) * Sin((Pi() * delmsq * LOSC) / (2.48 * Ev)), 2.); //Apply numu disappearance
+      }
+      else if (filename == FHCnueswap || filename == RHCnueswap) {
+         std::cerr << "This should not happen: (nu_mu in nueswap) \n";
+         return 0.;
+      }
+      else if (filename == FHCtauswap || filename == RHCtauswap) {
+         return Power(Sin(2 * theta_13) * Sin(theta_23) * Sin((Pi() * delmsq * LOSC) / (2.48 * Ev)), 2.); //Apply nue->numu
+      }
+      else {
+         std::cerr << "This should not happen: (File name not recognized) \n";
+         return 0.;
+      }
+   }
+   else if (nuPDG == 16 || nuPDG == -16) {
+      if (filename == FHCnonswap || filename == RHCnonswap) {
+         std:cerr << "This should not happen (nu_tau in nonswap) \n";
+         return 0.;
+      }
+      else if (filename == FHCnueswap || filename == RHCnueswap) {
+         return Power(Sin(2 * theta_13) * Cos(theta_23) * Sin((Pi() * delmsq * LOSC) / (2.48 * Ev)), 2.); //Apply nue->nutau
+      }
+      else if (filename == FHCtauswap || filename == RHCtauswap) {
+         return Power(Power(Cos(theta_13), 2.) * Sin(2 * theta_23) * Sin((Pi() * delmsq * LOSC) / (2.48 * Ev)), 2.); //Apply numu->nutau
+      }
+      else {
+         std::cerr << "This should not happen: (File name not recognized) \n";
+         return 0.;
+      }
+   }
+   else {
+      std::cerr << "This should not happen: (nuPDG not recognized) \n";
       return 0.;
-    } else {
-      std::cerr << "This should not happen: (File name not recognized) \n";
-        return 0.;
-    }
-  }
-  else if (nuPDG == 14 || nuPDG == -14) {
-    if (filename == nonswap) {
-      return 1. - Power(Sin(2 * THETA_23) * Sin((Pi() * DELMSQ_31 * LOSC) / (2.48 * Ev)), 2.); //Apply numu disappearance
-    }
-    else if (filename == nueswap) {
-      std::cerr << "This should not happen: (nu_mu in nueswap) \n";
-      return 0.;
-    }
-    else if (filename == tauswap) {
-      return Power(Sin(2 * THETA_13) * Sin(THETA_23) * Sin((Pi() * DELMSQ_31 * LOSC) / (2.48 * Ev)), 2.); //Apply nue->numu
-    }
-    else {
-        std::cerr << "This should not happen: (File name not recognized) \n";
-        return 0.;
-    }
-  }
-  else if (nuPDG == 16 || nuPDG == -16) {
-    if (filename == nonswap) {
-      std:cerr << "This should not happen (nu_tau in nonswap) \n";
-      return 0.;
-    }
-    else if (filename == nueswap) {
-      return Power(Sin(2 * THETA_13) * Cos(THETA_23) * Sin((Pi() * DELMSQ_31 * LOSC) / (2.48 * Ev)), 2.); //Apply nue->nutau
-    }
-    else if (filename == tauswap) {
-      return Power(Power(Cos(THETA_13), 2.) * Sin(2 * THETA_23) * Sin((Pi() * DELMSQ_31 * LOSC) / (2.48 * Ev)), 2.); //Apply numu->nutau
-    }
-    else {
-        std::cerr << "This should not happen: (File name not recognized) \n";
-        return 0.;
-    }
-  }
-  else {
-    std::cerr << "This should not happen: (nuPDG not recognized) \n";
-    return 0.;
-  }
-
+   }
 }
 
 void SplitMCTree(void) {
+
+   //Change to true to use RHC files
+   bool useRHC = true;
+   TString nonswap = "";
+   TString nueswap = "";
+   TString tauswap = "";
+   double nonswapPOT = 0.;
+   double nueswapPOT = 0.;
+   double tauswapPOT = 0.;
+
+   if (!useRHC) {
+      nonswap = FHCnonswap;
+      nueswap = FHCnueswap;
+      tauswap = FHCtauswap;
+
+      nonswapPOT = FHCnonswapPOT;
+      nueswapPOT = FHCnueswapPOT;
+      tauswapPOT = FHCtauswapPOT;
+   }
+   else {
+      nonswap = RHCnonswap;
+      nueswap = RHCnueswap;
+      tauswap = RHCtauswap;
+
+      nonswapPOT = RHCnonswapPOT;
+      nueswapPOT = RHCnueswapPOT;
+      tauswapPOT = RHCtauswapPOT;
+   }
+
+   TString filename = ""; //This tracks if the event in the TChain is from non/nue/tauswap
 
    //This will be the tree we train with
    TChain* ch1 = new TChain("cafTree");
@@ -90,22 +131,22 @@ void SplitMCTree(void) {
    ch1->Add(nueswap);
    ch1->Add(tauswap);
 
-   //This will be the tree we test on
-   TChain* ch2 = new TChain("caf");
-   ch2->Add(nonswap);
-   ch2->Add(nueswap);
-   ch2->Add(tauswap);
 
    //Use this file strictly to pull neutral current events
    TFile* NCFile = new TFile(nonswap, "OPEN");
    TTree* NCInputTree = (TTree*)NCFile->Get("cafTree");
-   TTree* TestNCInputTree = (TTree*)NCFile->Get("caf");
+
+
+   TFile* outputFile = NULL;
+   if (!useRHC) {
+      outputFile = new TFile("/storage/shared/ncchambe/FDMonteCarlo/FHCSplitMC.root", "RECREATE");
+   }
+   else {
+      outputFile = new TFile("/storage/shared/ncchambe/FDMonteCarlo/RHCSplitMC.root", "RECREATE");
+   }
 
    //Charged current events will be read from the chain
-
-   TFile* outputFile = new TFile("/storage/shared/ncchambe/FDMonteCarlo/FHCSplitMC.root", "RECREATE");
-
-   //Need 6 trees for CC: taus from tauswap, taus from nueswap, etc...
+   //We clone the tchain but copy none of the entries to preserve the set of branches. We populate these trees below
    TTree* NuTauSignalFromTauswap = ch1->CloneTree(0);
    TTree* NuTauBkgdFromTauswap = ch1->CloneTree(0);
    TTree* NuTauFromNueswap = ch1->CloneTree(0);
@@ -114,15 +155,6 @@ void SplitMCTree(void) {
    TTree* NumuFromNonswap = ch1->CloneTree(0);
    TTree* NumuFromTauswap = ch1->CloneTree(0);
    TTree* NCTree = NCInputTree->CloneTree(0);
-
-   TTree* TestNuTauSignalFromTauswap = ch2->CloneTree(0);
-   TTree* TestNuTauBkgdFromTauswap = ch2->CloneTree(0);
-   TTree* TestNuTauFromNueswap = ch2->CloneTree(0);
-   TTree* TestNueFromNonswap = ch2->CloneTree(0);
-   TTree* TestNueFromNueswap = ch2->CloneTree(0);
-   TTree* TestNumuFromNonswap = ch2->CloneTree(0);
-   TTree* TestNumuFromTauswap = ch2->CloneTree(0);
-   TTree* TestNCTree = TestNCInputTree->CloneTree(0);
 
 
    int nuPDG = 0.;
@@ -134,10 +166,11 @@ void SplitMCTree(void) {
    ch1->SetBranchAddress("isCC", &isCC);
    ch1->SetBranchAddress("Ev", &Ev);
 
-   ch2->SetBranchStatus("*", true);
-   ch2->SetBranchAddress("nuPDG", &nuPDG);
-   ch2->SetBranchAddress("isCC", &isCC);
-   ch2->SetBranchAddress("Ev", &Ev);
+   NCInputTree->SetBranchStatus("*", true);
+   NCInputTree->SetBranchAddress("nuPDG", &nuPDG);
+   NCInputTree->SetBranchAddress("isCC", &isCC);
+   NCInputTree->SetBranchAddress("Ev", &Ev);
+
 
    NuTauSignalFromTauswap->SetBranchStatus("*", true);
    NuTauBkgdFromTauswap->SetBranchStatus("*", true);
@@ -147,17 +180,7 @@ void SplitMCTree(void) {
    NumuFromNonswap->SetBranchStatus("*", true);
    NumuFromTauswap->SetBranchStatus("*", true);
    NCTree->SetBranchStatus("*", true);
-   NCTree->SetBranchAddress("isCC", &isCC);
 
-   TestNuTauSignalFromTauswap->SetBranchStatus("*", true);
-   TestNuTauBkgdFromTauswap->SetBranchStatus("*", true);
-   TestNuTauFromNueswap->SetBranchStatus("*", true);
-   TestNueFromNonswap->SetBranchStatus("*", true);
-   TestNueFromNueswap->SetBranchStatus("*", true);
-   TestNumuFromNonswap->SetBranchStatus("*", true);
-   TestNumuFromTauswap->SetBranchStatus("*", true);
-   TestNCTree->SetBranchStatus("*", true);
-   TestNCTree->SetBranchAddress("isCC", &isCC);
 
    NuTauSignalFromTauswap->Branch("POTScaledOscweight", &POTScaledOscweight);
    NuTauBkgdFromTauswap->Branch("POTScaledOscweight", &POTScaledOscweight);
@@ -168,95 +191,58 @@ void SplitMCTree(void) {
    NumuFromTauswap->Branch("POTScaledOscweight", &POTScaledOscweight);
    NCTree->Branch("POTScaledOscweight", &POTScaledOscweight);
 
-   TestNuTauSignalFromTauswap->Branch("POTScaledOscweight", &POTScaledOscweight);
-   TestNuTauBkgdFromTauswap->Branch("POTScaledOscweight", &POTScaledOscweight);
-   TestNuTauFromNueswap->Branch("POTScaledOscweight", &POTScaledOscweight);
-   TestNueFromNonswap->Branch("POTScaledOscweight", &POTScaledOscweight);
-   TestNueFromNueswap->Branch("POTScaledOscweight", &POTScaledOscweight);
-   TestNumuFromNonswap->Branch("POTScaledOscweight", &POTScaledOscweight);
-   TestNumuFromTauswap->Branch("POTScaledOscweight", &POTScaledOscweight);
-   TestNCTree->Branch("POTScaledOscweight", &POTScaledOscweight);
 
-   auto trainentries = NCInputTree->GetEntries();
-   POTScaledOscweight = scalefactor * POTperYear / nonswapPOT;
-   for (auto i = 0; i < trainentries; i++) {
+   auto NCEntries = NCInputTree->GetEntries();
+   POTScaledOscweight = scaleCorrection * POTperYear / nonswapPOT;
+   for (auto i = 0; i < NCEntries; i++) {
       NCInputTree->GetEntry(i);
-      if (!isCC)
+      if (!isCC) {
          NCTree->Fill();
-   }
-
-   auto testentries = TestNCInputTree->GetEntries();
-   for (auto i = 0; i < testentries; i++) {
-      TestNCInputTree->GetEntry(i);
-      if (!isCC)
-         TestNCTree->Fill();
+      }
    }
 
 
    auto nentries = ch1->GetEntries();
    for (auto i = 0; i < nentries; i++) {
       ch1->GetEntry(i);
-      if (isCC && (nuPDG == 16 || nuPDG == -16) && ch1->GetCurrentFile()->GetName() == tauswap) {
-         POTScaledOscweight = OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (scalefactor * POTperYear / tauswapPOT);
-         if (nuPDG == 16)
-            NuTauSignalFromTauswap->Fill();
-         else if (nuPDG == -16)
-            NuTauBkgdFromTauswap->Fill();
+      filename = ch1->GetCurrentFile()->GetName();
+      if (isCC) {
+         if (Abs(nuPDG) == 16 && filename == tauswap) {
+            POTScaledOscweight = OscWeight(filename, Ev, nuPDG, DELMSQ_31, THETA_23, THETA_13) * (scaleCorrection * POTperYear / tauswapPOT);
+            if (!useRHC) {
+               if (nuPDG == 16) NuTauSignalFromTauswap->Fill();
+               else if (nuPDG == -16) NuTauBkgdFromTauswap->Fill();
+            }
+            else {
+               if (nuPDG == -16) NuTauSignalFromTauswap->Fill();
+               else if (nuPDG == 16) NuTauBkgdFromTauswap->Fill();
+            }
+         }
+         else if (Abs(nuPDG) == 16 && filename == nueswap) {
+            POTScaledOscweight = OscWeight(filename, Ev, nuPDG, DELMSQ_31, THETA_23, THETA_13) * (scaleCorrection * POTperYear / nueswapPOT);
+            NuTauFromNueswap->Fill();
+         }
+         else if (Abs(nuPDG) == 14 && filename == tauswap) {
+            POTScaledOscweight = OscWeight(filename, Ev, nuPDG, DELMSQ_31, THETA_23, THETA_13) * (scaleCorrection * POTperYear / tauswapPOT);
+            NumuFromTauswap->Fill();
+         }
+         else if (Abs(nuPDG) == 14 && filename == nonswap) {
+            POTScaledOscweight = OscWeight(filename, Ev, nuPDG, DELMSQ_31, THETA_23, THETA_13) * (scaleCorrection * POTperYear / nonswapPOT);
+            NumuFromNonswap->Fill();
+         }
+         else if (Abs(nuPDG) == 12 && filename == nonswap) {
+            POTScaledOscweight = OscWeight(filename, Ev, nuPDG, DELMSQ_31, THETA_23, THETA_13) * (scaleCorrection * POTperYear / nonswapPOT);
+            NueFromNonswap->Fill();
+         }
+         else if (Abs(nuPDG) == 12 && filename == nueswap) {
+            POTScaledOscweight = OscWeight(filename, Ev, nuPDG, DELMSQ_31, THETA_23, THETA_13) * (scaleCorrection * POTperYear / nueswapPOT);
+            NueFromNueswap->Fill();
+         }
       }
-      else if (isCC && (nuPDG == 16 || nuPDG == -16) && ch1->GetCurrentFile()->GetName() == nueswap) {
-         POTScaledOscweight = OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (scalefactor * POTperYear / nueswapPOT);
-         NuTauFromNueswap->Fill();
+      if (i % 10000 == 0) {
+          std::cerr << (float) i / (float)nentries << std::endl;
+          std::cerr << "Current file: " << filename << std::endl;
       }
-      else if (isCC && (nuPDG == 14 || nuPDG == -14) && ch1->GetCurrentFile()->GetName() == tauswap) {
-         POTScaledOscweight = OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (scalefactor * POTperYear / tauswapPOT);
-         NumuFromTauswap->Fill();
-      }
-      else if (isCC && (nuPDG == 14 || nuPDG == -14) && ch1->GetCurrentFile()->GetName() == nonswap) {
-         POTScaledOscweight = OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (scalefactor * POTperYear / nonswapPOT);
-         NumuFromNonswap->Fill();
-      }
-      else if (isCC && (nuPDG == 12 || nuPDG == -12) && ch1->GetCurrentFile()->GetName() == nonswap) {
-         POTScaledOscweight = OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (scalefactor * POTperYear / nonswapPOT);
-         NueFromNonswap->Fill();
-      }
-      else if (isCC && (nuPDG == 12 || nuPDG == -12) && ch1->GetCurrentFile()->GetName() == nueswap) {
-         POTScaledOscweight = OscWeight(ch1->GetCurrentFile()->GetName(), Ev, nuPDG) * (scalefactor * POTperYear / nueswapPOT);
-         NueFromNueswap->Fill();
-      }
-      if (i % 10000 == 0) std::cerr << (float)(i + 1) / (float)nentries << std::endl;
-   }
-
-   auto nentries2 = ch2->GetEntries();
-   for (auto i = 0; i < nentries2; i++) {
-      ch2->GetEntry(i);
-      if (isCC && (nuPDG == 16 || nuPDG == -16) && ch2->GetCurrentFile()->GetName() == tauswap) {
-         POTScaledOscweight = OscWeight(ch2->GetCurrentFile()->GetName(), Ev, nuPDG) * (scalefactor * POTperYear / tauswapPOT);
-         if (nuPDG == 16)
-            TestNuTauSignalFromTauswap->Fill();
-         else if (nuPDG == -16)
-            TestNuTauBkgdFromTauswap->Fill();
-      }
-      else if (isCC && (nuPDG == 16 || nuPDG == -16) && ch2->GetCurrentFile()->GetName() == nueswap) {
-         POTScaledOscweight = OscWeight(ch2->GetCurrentFile()->GetName(), Ev, nuPDG) * (scalefactor * POTperYear / nueswapPOT);
-         TestNuTauFromNueswap->Fill();
-      }
-      else if (isCC && (nuPDG == 14 || nuPDG == -14) && ch2->GetCurrentFile()->GetName() == tauswap) {
-         POTScaledOscweight = OscWeight(ch2->GetCurrentFile()->GetName(), Ev, nuPDG) * (scalefactor * POTperYear / tauswapPOT);
-         TestNumuFromTauswap->Fill();
-      }
-      else if (isCC && (nuPDG == 14 || nuPDG == -14) && ch2->GetCurrentFile()->GetName() == nonswap) {
-         POTScaledOscweight = OscWeight(ch2->GetCurrentFile()->GetName(), Ev, nuPDG) * (scalefactor * POTperYear / nonswapPOT);
-         TestNumuFromNonswap->Fill();
-      }
-      else if (isCC && (nuPDG == 12 || nuPDG == -12) && ch2->GetCurrentFile()->GetName() == nonswap) {
-         POTScaledOscweight = OscWeight(ch2->GetCurrentFile()->GetName(), Ev, nuPDG) * (scalefactor * POTperYear / nonswapPOT);
-         TestNueFromNonswap->Fill();
-      }
-      else if (isCC && (nuPDG == 12 || nuPDG == -12) && ch2->GetCurrentFile()->GetName() == nueswap) {
-         POTScaledOscweight = OscWeight(ch2->GetCurrentFile()->GetName(), Ev, nuPDG) * (scalefactor * POTperYear / nueswapPOT);
-         TestNueFromNueswap->Fill();
-      }
-      if (i % 10000 == 0) std::cerr << (float)(i + 1) / (float)nentries2 << std::endl;
    }
 
    outputFile->WriteObject(NuTauSignalFromTauswap, "NuTauSignalFromTauswap");
@@ -267,16 +253,7 @@ void SplitMCTree(void) {
    outputFile->WriteObject(NumuFromNonswap, "NumuFromNonswap");
    outputFile->WriteObject(NumuFromTauswap, "NumuFromTauswap");
    outputFile->WriteObject(NCTree, "NCTree");
-   outputFile->WriteObject(TestNuTauSignalFromTauswap, "TestNuTauSignalFromTauswap");
-   outputFile->WriteObject(TestNuTauBkgdFromTauswap, "TestNuTauBkgdFromTauswap");
-   outputFile->WriteObject(TestNuTauFromNueswap, "TestNuTauFromNueswap");
-   outputFile->WriteObject(TestNueFromNonswap, "TestNueFromNonswap");
-   outputFile->WriteObject(TestNueFromNueswap, "TestNueFromNueswap");
-   outputFile->WriteObject(TestNumuFromNonswap, "TestNumuFromNonswap");
-   outputFile->WriteObject(TestNumuFromTauswap, "TestNumuFromTauswap");
-   outputFile->WriteObject(TestNCTree, "TestNCTree");
    outputFile->Close();
-
    NCFile->Close();
 
 }
